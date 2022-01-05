@@ -94,33 +94,30 @@ const timeReducer = (state = initialState, action) => {
 const AdjustmentBlock = props => {
 
   const [id] = useState(props.id);
-
   const [number, setNumber] = useState(props.number);
 
   const decrementCount = () => {
-    //console.log("allow change:", !props.allowChange);
+    //console.log("allow change:", props.allowChange);
     if (!props.allowChange) {
       setNumber(number => number - 1 < 1 ? number : number - 1);
+      //props.changeMade(true);
     }
   }
 
   const incrementCount = () => {
     if (!props.allowChange) {
       setNumber(number => number + 1 > 60 ? number : number + 1);
+      //props.changeMade(true);
     }
-    //console.log("adjustment block:", number);
-    // props.changeTime(number);
   }
 
-  /*
-  const reset = (number) => {
-    setNumber(number);
-  }*/
-
   useEffect(() => {
-    /*console.log(props.reset())
-    if (props.reset() !== number) setNumber(props.reset());*/
-    props.changeTime(number);
+    //console.log(props.toReset);
+    if (props.toReset && number !== props.toReset) {
+      setNumber(props.toReset);
+      props.doneReset(false);
+    }
+    if (props.toReset === null) props.changeTime(number);
   }, [props, number]);
 
   let content = (
@@ -160,43 +157,28 @@ const Timer = props => {
   const [sessionTime, setSessionTime] = useState(props.sessionTimeApp);
   const [breakTime, setBreakTime] = useState(props.breakTimeApp);
   const [timeLeft, setTimeLeft] = useState(sessionTime * 60);
-  const [startStop, setStartStop] = useState(false);
+  const [startClock, setStartClock] = useState(false);
   const [onBreak, setOnBreak] = useState(false); 
+  const [updateTime, setUpdateTime] = useState(true);
+  const [resetTimer, setResetTimer] = useState(false);
+
+  //var timer = React.useRef(null);
 
   const reset = () => {
     setTimeLeft(initialSessionTime * 60);
     setSessionTime(initialSessionTime);
     setBreakTime(initialBreakTime);
-    if (startStop) setStartStop(!startStop);
-    props.canAdjust(!startStop);
+    if (startClock) setStartClock(!startClock);
+    props.canAdjust(!startClock);
+    props.reset(true);
+    setResetTimer(true);
     //props.resetBreak(initialBreakTime);
     //props.resetSession(initialSessionTime);
   }
 
-  // const printTimeLeft = () => {
-  //   console.log(`time left: ${timeLeft}`);
-  // }
-  /*
-  const reduceTime = () => {
-    setTimeLeft(timeLeft - 1);
-  }*/
-
   const startStopClock = () => {
-    setStartStop(!startStop);
-    //console.log(startStop);
-    props.canAdjust(!startStop);
-    /*
-    var timer = null;
-
-    if (flag) {
-      timer = setInterval(reduceTime, 1000);
-    } else {
-      if (timer != null) clearInterval(timer);
-    }
-
-    console.log(`time left: ${timeLeft}`);
-    */
-    // console.log("after", flag);
+    setStartClock(!startClock);
+    setUpdateTime(!updateTime);
   }
 
   const convertTime = (seconds) => {
@@ -209,30 +191,49 @@ const Timer = props => {
     return `${minutesLeft}:${secondsLeft}`;
   }
 
-  useEffect(() => {
+  useEffect(() => { 
 
+    // Helper function for the startStopClock function
     const reduceTime = () => {
-      setTimeLeft(timeLeft - 1);
+      if (startClock) setTimeLeft(timeLeft - 1);
     }
 
-    if (startStop) {
+    props.canAdjust(startClock); // check
+
+    if (startClock) {
       if (timeLeft >= 0) {
         var timer = setTimeout(reduceTime, 1000); 
       } else {
-        //setTimeout(reduceTime, 1000);
         setOnBreak(!onBreak);
-        setTimeLeft(breakTime * 60);
+
+        // Reset timeLeft according to the value of the onBreak variable
+        // The varialbe onBreak is not set until the end of the useEffect() function
+        if (!onBreak) setTimeLeft(breakTime * 60);
+        else setTimeLeft(sessionTime * 60)
       }
     } else {
-      clearInterval(timer);
+      clearTimeout(timer);
     }
-    
-    if (!startStop) {
-      setTimeLeft(props.sessionTimeApp * 60);
+
+    if (resetTimer) {
+      //clearTimeout(timer);
+      setResetTimer(false);
+    }
+
+    if (updateTime) { // updateTime
+      if ((onBreak && breakTime !== props.breakTimeApp) || (!onBreak && sessionTime !== props.sessionTimeApp) || resetTimer)
+        setTimeLeft(props.sessionTimeApp * 60);
+
       setSessionTime(props.sessionTimeApp);
       setBreakTime(props.breakTimeApp);
     }
-  }, [startStop, timeLeft, onBreak, breakTime, props]);
+
+    if (!startClock) {
+      setUpdateTime(true);
+    } else {
+      setUpdateTime(false);
+    }
+  }, [sessionTime, breakTime, startClock, updateTime, timeLeft, onBreak, resetTimer, props]);
 
   let content = (
     <div id="timer-block">
@@ -248,7 +249,7 @@ const Timer = props => {
         id="start_stop" 
         onClick = {startStopClock}
       >
-        {!startStop ? <i className="fas fa-play"></i> : <i className="fas fa-pause"></i>}
+        {!startClock ? <i className="fas fa-play"></i> : <i className="fas fa-pause"></i>}
       </div>
       <div 
         id="reset" 
@@ -268,6 +269,7 @@ const App = props => {
   const [sessionTime, setSessionTime] = useState(initialSessionTime);
   const [timerOn, setTimerOn] = useState(false);
   const [reset, setReset] = useState(false);
+  //const [changeMode, setChangeMode] = useState(true);
 
   const breakUpdate = (number) => {
     setBreakTime(number);
@@ -280,76 +282,67 @@ const App = props => {
   }
 
   const timerPause = (value) => {
-    console.log(value);
-    if (value === true) setTimerOn(true); 
-    if (value === false) setTimerOn(false);
+    //console.log("timer pause value:", value);
+    if (value === true) {
+      setTimerOn(true); 
+      //setChangeMode(false);
+    }
+    if (value === false) {
+      setTimerOn(false);
+      //setChangeMode(true);
+    }
+  }
+
+  const resetApp = (value) => {
+    if (value === true) {
+      setReset(true);
+      setTimerOn(false);
+    }
+    if (value === false) {
+      setReset(false);
+      setTimerOn(false);
+    }
   }
 
   /*
-  useEffect(() => {
-    if (breakTime === 5 && sessionTime === 25) {
-      resetBreakApp(initialBreakTime);
-      resetSessionApp(initialSessionTime);
+  const incDecr = (value) => {
+    if (value === true) {
+      setChangeMode(true);
+    } else {
+      setChangeMode(false);
     }
-  });*/
-  
-  /*
-  const checkAdjustment = (value = undefined) => {
-    console.log(value);
-    return value === undefined ? true : value;
   }*/
 
-  /*
-  const resetBreakApp = () => {
-    if (breakTime === initialBreakTime && sessionTime === initialSessionTime) {
-      return initialBreakTime;
-    } else {
-      return null;
-    }
-    
-    //return number;
-  }
-
-  const resetSessionApp = () => {
-    if (breakTime === initialBreakTime && sessionTime === initialSessionTime) {
-      return initialSessionTime;
-    } else {
-      return null;
-    }
-    //return number;
-  }*/
-
-  /*
   useEffect(() => {
-    sendBreakTimeToChild(breakTime);
-    sendSessionTimeToChild(sessionTime);
+    //console.log(breakTime, sessionTime, timerOn);
   });
-
-  const sendBreakTimeToChild = (number) => number;
-  const sendSessionTimeToChild = (number) => number;*/
 
   let content = (
     <div id="main">
       <div id="app-title">25 + 5 Clock</div>
       <AdjustmentBlock 
         id = "break"
-        number = {initialBreakTime}
+        number = {breakTime} // initial?
         changeTime = {breakUpdate}
         allowChange = {timerOn}
-        //reset = {resetBreakApp}
+        //changeMade = {incDecr}
+        toReset = {reset ? initialBreakTime : null}
+        doneReset = {resetApp}
       />
       <AdjustmentBlock 
         id = "session"
-        number = {initialSessionTime}
+        number = {sessionTime} // initial?
         changeTime = {sessionUpdate}
         allowChange = {timerOn}
-        //reset = {resetSessionApp}
+        //changeMade = {incDecr}
+        toReset = {reset ? initialSessionTime : null}
+        doneReset = {resetApp}
       />
       <Timer 
         sessionTimeApp = {sessionTime}
         breakTimeApp = {breakTime}
-        resetBreak = {breakUpdate}
-        resetSession = {sessionUpdate}
+        //allowChange = {changeMode}
+        reset = {resetApp}
         canAdjust = {timerPause}
       /> 
     </div>

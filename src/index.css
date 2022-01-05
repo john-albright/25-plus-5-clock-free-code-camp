@@ -1,18 +1,19 @@
 body {
   background-color: rgb(120, 105, 189);
+  margin: 0px;
   color: white;
   font-size: 20px;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 #root {
-  height: 100vh;
+  height: 80vh;
   width: 100vw;
 }
 
 #main {
-  width: 50%;
-  height: 50%;
+  width: 45%;
+  height: 60%;
   margin: 10% auto;
   padding: 10px;
   display: grid;
@@ -56,6 +57,13 @@ body {
   grid-column: 1/3;
 }
 
+#session-increment:hover, #break-increment:hover, #session-decrement:hover, #break-decrement:hover,
+#start_stop:hover, #reset:hover {
+  color: rgb(67, 39, 189);
+  cursor: pointer;
+  transition: all 0.3s ease-in;
+}
+
 #footer {
   color: snow;
   display: flex;
@@ -75,11 +83,11 @@ body {
 }
 
 #footer a:link, a:visited {
-  color: rgb(38, 6, 177);
+  color: rgb(79, 35, 97);
   transition: all 0.3s linear;
 }
 
 #footer a:active, a:hover {
-  color: rgb(95, 9, 56);
+  color: rgb(194, 129, 165);
   transition: all 0.3s linear;
 }
