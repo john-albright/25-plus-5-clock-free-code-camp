@@ -13,7 +13,7 @@ body {
 
 #main {
   width: 45%;
-  height: 60%;
+  height: 350px;
   margin: 10% auto;
   padding: 10px;
   display: grid;
@@ -83,11 +83,11 @@ body {
 }
 
 #footer a:link, a:visited {
-  color: rgb(79, 35, 97);
+  color: rgb(81, 50, 94);
   transition: all 0.3s linear;
 }
 
 #footer a:active, a:hover {
-  color: rgb(194, 129, 165);
+  color: rgb(196, 163, 181);
   transition: all 0.3s linear;
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
 //import { Provider, connect } from 'react-redux';
 //import { createStore } from 'redux';
@@ -100,6 +100,7 @@ const AdjustmentBlock = props => {
     //console.log("allow change:", props.allowChange);
     if (!props.allowChange) {
       setNumber(number => number - 1 < 1 ? number : number - 1);
+      //console.log("decrement" + id);
       //props.changeMade(true);
     }
   }
@@ -107,18 +108,21 @@ const AdjustmentBlock = props => {
   const incrementCount = () => {
     if (!props.allowChange) {
       setNumber(number => number + 1 > 60 ? number : number + 1);
+      //console.log("increment" + id);
       //props.changeMade(true);
     }
   }
 
   useEffect(() => {
+    //console.log(`${id}: ${number}`);
+
     //console.log(props.toReset);
-    if (props.toReset && number !== props.toReset) {
+    if (props.toReset /* && number !== props.toReset*/) {
       setNumber(props.toReset);
       props.doneReset(false);
     }
     if (props.toReset === null) props.changeTime(number);
-  }, [props, number]);
+  }, [props, id, number]);
 
   let content = (
 
@@ -161,24 +165,32 @@ const Timer = props => {
   const [onBreak, setOnBreak] = useState(false); 
   const [updateTime, setUpdateTime] = useState(true);
   const [resetTimer, setResetTimer] = useState(false);
-
-  //var timer = React.useRef(null);
+  const timerRef = useRef(null);
+  const audioRef = useRef(null);
 
   const reset = () => {
     setTimeLeft(initialSessionTime * 60);
     setSessionTime(initialSessionTime);
     setBreakTime(initialBreakTime);
-    if (startClock) setStartClock(!startClock);
+    setOnBreak(false);
+    if (startClock) {
+      setStartClock(!startClock);
+      clearTimeout(timerRef);
+    }
+    if (audioRef.current !== null && audioRef.current !== 0) {
+      /* if (!audioRef.current.paused) */
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
     props.canAdjust(!startClock);
     props.reset(true);
     setResetTimer(true);
-    //props.resetBreak(initialBreakTime);
-    //props.resetSession(initialSessionTime);
   }
 
   const startStopClock = () => {
     setStartClock(!startClock);
     setUpdateTime(!updateTime);
+    if (startClock) clearTimeout(timerRef); 
   }
 
   const convertTime = (seconds) => {
@@ -193,16 +205,25 @@ const Timer = props => {
 
   useEffect(() => { 
 
+    // Load the audio file after the component has loaded 
+    /*
+    if (audioRef.current == null) {
+      //console.log(document.getElementById("beep"));
+      audioRef.current = document.getElementById("beep");
+      //console.log(audioRef.current);
+    }*/
+
     // Helper function for the startStopClock function
     const reduceTime = () => {
       if (startClock) setTimeLeft(timeLeft - 1);
+      //console.log(timeLeft);
     }
 
     props.canAdjust(startClock); // check
 
     if (startClock) {
-      if (timeLeft >= 0) {
-        var timer = setTimeout(reduceTime, 1000); 
+      if (timeLeft > 0) {
+        timerRef.current = setTimeout(reduceTime, 1000);
       } else {
         setOnBreak(!onBreak);
 
@@ -211,16 +232,23 @@ const Timer = props => {
         if (!onBreak) setTimeLeft(breakTime * 60);
         else setTimeLeft(sessionTime * 60)
       }
-    } else {
-      clearTimeout(timer);
+    } 
+    
+    /*if (!startClock) {
+      clearTimeout(timerRef.current);
+    }*/
+
+    if (timeLeft === 0) {
+      audioRef.current = document.getElementById("beep");
+      audioRef.current.play();
     }
 
     if (resetTimer) {
-      //clearTimeout(timer);
+      //clearTimeout(timerRef);
       setResetTimer(false);
     }
 
-    if (updateTime) { // updateTime
+    if (updateTime) {
       if ((onBreak && breakTime !== props.breakTimeApp) || (!onBreak && sessionTime !== props.sessionTimeApp) || resetTimer)
         setTimeLeft(props.sessionTimeApp * 60);
 
@@ -228,11 +256,14 @@ const Timer = props => {
       setBreakTime(props.breakTimeApp);
     }
 
+    // Don't allow the time to be updated if the timer is on
     if (!startClock) {
       setUpdateTime(true);
     } else {
       setUpdateTime(false);
     }
+
+    return () => clearTimeout(timerRef.current);
   }, [sessionTime, breakTime, startClock, updateTime, timeLeft, onBreak, resetTimer, props]);
 
   let content = (
@@ -257,6 +288,7 @@ const Timer = props => {
       >
         <i className="fas fa-sync"></i>
       </div>
+      <audio id="beep" src="mixkit-vintage-warning-alarm-990.wav" type="audio/wav"></audio>
     </div>
   );
 
@@ -283,14 +315,8 @@ const App = props => {
 
   const timerPause = (value) => {
     //console.log("timer pause value:", value);
-    if (value === true) {
-      setTimerOn(true); 
-      //setChangeMode(false);
-    }
-    if (value === false) {
-      setTimerOn(false);
-      //setChangeMode(true);
-    }
+    if (value === true) setTimerOn(true); 
+    if (value === false) setTimerOn(false);
   }
 
   const resetApp = (value) => {
@@ -304,15 +330,7 @@ const App = props => {
     }
   }
 
-  /*
-  const incDecr = (value) => {
-    if (value === true) {
-      setChangeMode(true);
-    } else {
-      setChangeMode(false);
-    }
-  }*/
-
+  // Optional code to debug state values 
   useEffect(() => {
     //console.log(breakTime, sessionTime, timerOn);
   });
@@ -322,26 +340,23 @@ const App = props => {
       <div id="app-title">25 + 5 Clock</div>
       <AdjustmentBlock 
         id = "break"
-        number = {breakTime} // initial?
+        number = {initialBreakTime}
         changeTime = {breakUpdate}
         allowChange = {timerOn}
-        //changeMade = {incDecr}
         toReset = {reset ? initialBreakTime : null}
         doneReset = {resetApp}
       />
       <AdjustmentBlock 
         id = "session"
-        number = {sessionTime} // initial?
+        number = {initialSessionTime}
         changeTime = {sessionUpdate}
         allowChange = {timerOn}
-        //changeMade = {incDecr}
         toReset = {reset ? initialSessionTime : null}
         doneReset = {resetApp}
       />
       <Timer 
         sessionTimeApp = {sessionTime}
         breakTimeApp = {breakTime}
-        //allowChange = {changeMode}
         reset = {resetApp}
         canAdjust = {timerPause}
       /> 
