@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/25-plus-5-clock-free-code-camp/static/css/main.84b3df29.css",
+    "main.js": "/25-plus-5-clock-free-code-camp/static/js/main.68d3147f.js",
+    "index.html": "/25-plus-5-clock-free-code-camp/index.html",
+    "main.84b3df29.css.map": "/25-plus-5-clock-free-code-camp/static/css/main.84b3df29.css.map",
+    "main.68d3147f.js.map": "/25-plus-5-clock-free-code-camp/static/js/main.68d3147f.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.84b3df29.css",
+    "static/js/main.68d3147f.js"
+  ]
+}
