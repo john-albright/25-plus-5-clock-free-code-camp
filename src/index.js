@@ -1,95 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import ReactDOM from 'react-dom';
-//import { Provider, connect } from 'react-redux';
-//import { createStore } from 'redux';
 import './index.css';
 
 // Global variables
 const initialSessionTime = 25;
 const initialBreakTime = 5;
-
-/*=============
-   REDUX CODE
-===============*/
-/*
-const INCREMENT_SESSION = 'INCREMENT_SESSION';
-const DECREMENT_SESSION = 'DECREMENT_SESSION';
-const INCREMENT_BREAK = 'INCREMENT_BREAK';
-const DECREMENT_BREAK = 'DECREMENT_BREAK';
-const RESET = 'RESET';
-
-// Actions 
-
-const incrementSession = () => {
-  return {
-    type: INCREMENT_SESSION
-  };
-}
-
-const decrementSession = () => {
-  return {
-    type: DECREMENT_SESSION
-  };
-}
-
-const incrementBreak = () => {
-  return {
-    type: INCREMENT_BREAK
-  };
-}
-
-const decrementBreak = () => {
-  return {
-    type: DECREMENT_BREAK
-  };
-}
-
-const reset = () => {
-  return {
-    type: RESET
-  };
-}
-
-// Initial state to be used as a default argument in the reducer
-const initialState = {
-  sessionTime: initialSessionTime,
-  breakTime: initialBreakTime
-};
-
-// Reducer
-const timeReducer = (state = initialState, action) => {
-  switch(action.type) {
-      case INCREMENT_SESSION:
-          return {
-              sessionTime: state.sessionTime + 1
-          };
-      case DECREMENT_SESSION:
-          return {
-              sessionTime: state.sessionTime - 1
-          }
-      case INCREMENT_BREAK:
-          return {
-              breakTime: state.breakTime + 1
-          };
-      case DECREMENT_BREAK:
-          return {
-              breakTime: state.breakTime - 1
-          }
-      case RESET: 
-          return  {
-            sessionTime: initialSessionTime,
-            breakTime: initialBreakTime
-          }
-      default:
-          return state; 
-  }
-}
-
-*/
-
-/*=============
-   REACT CODE
-===============*/
 
 const AdjustmentBlock = props => {
 
@@ -100,24 +15,22 @@ const AdjustmentBlock = props => {
     //console.log("allow change:", props.allowChange);
     if (!props.allowChange) {
       setNumber(number => number - 1 < 1 ? number : number - 1);
-      //console.log("decrement" + id);
-      //props.changeMade(true);
+      //console.log(`decrement ${id}`);
     }
   }
 
   const incrementCount = () => {
     if (!props.allowChange) {
       setNumber(number => number + 1 > 60 ? number : number + 1);
-      //console.log("increment" + id);
-      //props.changeMade(true);
+      //console.log(`increment ${id}`);
     }
   }
 
   useEffect(() => {
     //console.log(`${id}: ${number}`);
-
     //console.log(props.toReset);
-    if (props.toReset /* && number !== props.toReset*/) {
+
+    if (props.toReset) {
       setNumber(props.toReset);
       props.doneReset(false);
     }
@@ -205,21 +118,13 @@ const Timer = props => {
 
   useEffect(() => { 
 
-    // Load the audio file after the component has loaded 
-    /*
-    if (audioRef.current == null) {
-      //console.log(document.getElementById("beep"));
-      audioRef.current = document.getElementById("beep");
-      //console.log(audioRef.current);
-    }*/
-
     // Helper function for the startStopClock function
     const reduceTime = () => {
       if (startClock) setTimeLeft(timeLeft - 1);
       //console.log(timeLeft);
     }
 
-    props.canAdjust(startClock); // check
+    props.canAdjust(startClock);
 
     if (startClock) {
       if (timeLeft > 0) {
@@ -232,11 +137,7 @@ const Timer = props => {
         if (!onBreak) setTimeLeft(breakTime * 60);
         else setTimeLeft(sessionTime * 60)
       }
-    } 
-    
-    /*if (!startClock) {
-      clearTimeout(timerRef.current);
-    }*/
+    }
 
     if (timeLeft === 0) {
       audioRef.current = document.getElementById("beep");
@@ -301,7 +202,6 @@ const App = props => {
   const [sessionTime, setSessionTime] = useState(initialSessionTime);
   const [timerOn, setTimerOn] = useState(false);
   const [reset, setReset] = useState(false);
-  //const [changeMode, setChangeMode] = useState(true);
 
   const breakUpdate = (number) => {
     setBreakTime(number);
